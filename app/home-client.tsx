@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { PRODUCTS, type Product, useCart, useTheme } from "./context";
 
 import {
@@ -115,7 +116,7 @@ const storyBeats = [
     tag: "The Breakthrough",
     title: "6-core neural engine.\nOn your wrist.",
     body: "NEXUS S1 runs a full AI model entirely on-device. No cloud. No lag. No privacy trade-off. Your health data never leaves your wrist — and the intelligence arrives instantly.",
-    img: "produce.png",
+    img: "/produce.png",
     imgAlt: "Close-up of advanced chip technology",
     accent: true,
   },
@@ -154,14 +155,16 @@ function StoryImage({
       {accent && (
         <div className="absolute inset-0 bg-primary/5 z-10 pointer-events-none" />
       )}
-      <motion.img
-        src={img}
-        alt={imgAlt}
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ y }}
-        loading="lazy"
-        decoding="async"
-      />
+      <motion.div className="absolute inset-0" style={{ y }}>
+        <Image
+          src={img}
+          alt={imgAlt}
+          fill
+          className="object-cover"
+          sizes="(max-width: 1024px) 100vw, 50vw"
+          quality={70}
+        />
+      </motion.div>
     </div>
   );
 }
@@ -302,15 +305,20 @@ function ProductCard({
       onClick={onView}
     >
       <div className="relative overflow-hidden bg-secondary h-52">
-        <motion.img
-          src={p.image}
-          alt={p.name}
-          className="w-full h-full object-cover"
+        <motion.div
+          className="absolute inset-0"
           whileHover={{ scale: 1.06 }}
           transition={{ duration: 0.5 }}
-          loading="lazy"
-          decoding="async"
-        />
+        >
+          <Image
+            src={p.image}
+            alt={p.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            quality={70}
+          />
+        </motion.div>
         {p.badge && (
           <span
             className="absolute top-3 left-3 bg-primary text-primary-foreground text-[9px] tracking-widest uppercase px-2 py-1 font-semibold"
@@ -707,9 +715,11 @@ export default function Home() {
                         className="grid grid-cols-[1fr_auto] gap-4 border-b border-border pb-4"
                       >
                         <div className="flex  justify-between">
-                          <img
+                          <Image
                             src={item.image}
                             alt={item.name}
+                            width={64}
+                            height={64}
                             className="w-16 h-16 object-cover rounded"
                           />
                           <div>
@@ -918,13 +928,14 @@ export default function Home() {
                 animate={{ rotate: 360 }}
                 transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
               />
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=960&h=960&fit=crop&auto=format"
                 alt="NEXUS S1 AI Smartwatch front view"
-                className="relative z-10 w-full h-full object-cover rounded-full"
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
+                fill
+                preload
+                className="relative z-10 object-cover rounded-full"
+                sizes="(max-width: 768px) 320px, 480px"
+                quality={78}
               />
             </div>
           </motion.div>
@@ -1056,16 +1067,21 @@ export default function Home() {
                   className="bg-card p-8 flex flex-col gap-6 cursor-default h-full transition-colors hover:bg-secondary"
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="overflow-hidden h-48 bg-secondary">
-                    <motion.img
-                      src={f.img}
-                      alt={f.imgAlt}
-                      className="w-full h-full object-cover"
+                  <div className="relative overflow-hidden h-48 bg-secondary">
+                    <motion.div
+                      className="absolute inset-0"
                       whileHover={{ scale: 1.05 }}
                       transition={{ duration: 0.6 }}
-                      loading="lazy"
-                      decoding="async"
-                    />
+                    >
+                      <Image
+                        src={f.img}
+                        alt={f.imgAlt}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        quality={70}
+                      />
+                    </motion.div>
                   </div>
                   <div className="flex items-center gap-3" style={MONO}>
                     <f.icon size={14} className="text-primary" />
