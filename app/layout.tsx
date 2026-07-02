@@ -14,48 +14,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "NEXUS S1 | AI Smartwatch",
-    template: "%s | NEXUS S1",
-  },
+  title: "NEXUS S1 | AI Smartwatch",
   description:
     "Discover NEXUS S1, an AI-powered smartwatch built for health tracking, long battery life, and everyday performance.",
-  keywords: [
-    "NEXUS S1",
-    "AI smartwatch",
-    "smartwatch",
-    "health tracking",
-    "fitness wearable",
-    "wearable technology",
-  ],
-  authors: [{ name: "NEXUS Technologies" }],
-  creator: "NEXUS Technologies",
-  publisher: "NEXUS Technologies",
-  robots: {
-    index: true,
-    follow: true,
-  },
   openGraph: {
     title: "NEXUS S1 | AI Smartwatch",
     description:
-      "Meet NEXUS S1, an AI-powered smartwatch for health, performance, and all-day intelligence.",
-    type: "website",
-    siteName: "NEXUS S1",
+      "Discover NEXUS S1, an AI-powered smartwatch built for health tracking, long battery life, and everyday performance.",
     images: [
       {
-        url: "/produce.png",
-        width: 1200,
-        height: 630,
-        alt: "NEXUS S1 AI smartwatch",
+        url: "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=960&h=960&fit=crop&auto=format",
+        width: 960,
+        height: 960,
+        alt: "NEXUS S1 AI smartwatch thumbnail",
       },
     ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "NEXUS S1 | AI Smartwatch",
-    description:
-      "AI-powered smartwatch for health tracking, long battery life, and everyday performance.",
-    images: ["/produce.png"],
   },
 };
 
