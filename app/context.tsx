@@ -1,6 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useEffect, useState } from "react";
+import React, { createContext, useContext, useReducer, useEffect, useRef } from "react";
+import {
+  ThemeProvider as NextThemesProvider,
+  useTheme as useNextTheme,
+} from "next-themes";
 
 /* ─── Types ──────────────────────────────────────────────────── */
 export interface Product {
@@ -20,39 +24,29 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
-/* ─── Theme Context ──────────────────────────────────────────── */
-interface ThemeCtx {
-  isDark: boolean;
-  toggle: () => void;
-}
-
-const ThemeContext = createContext<ThemeCtx>({ isDark: true, toggle: () => {} });
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [isDark, setIsDark] = useState(() => {
-    try {
-      return localStorage.getItem("nexus-theme") !== "light";
-    } catch {
-      return true;
-    }
-  });
-
-  useEffect(() => {
-    document.documentElement.classList.remove("dark");
-    document.documentElement.classList.toggle("light", !isDark);
-    try {
-      localStorage.setItem("nexus-theme", isDark ? "dark" : "light");
-    } catch {}
-  }, [isDark]);
-
   return (
-    <ThemeContext.Provider value={{ isDark, toggle: () => setIsDark((d) => !d) }}>
+    <NextThemesProvider
+      attribute="class"
+      defaultTheme="dark"
+      disableTransitionOnChange
+      enableSystem={false}
+      storageKey="nexus-theme"
+    >
       {children}
-    </ThemeContext.Provider>
+    </NextThemesProvider>
   );
 }
 
-export const useTheme = () => useContext(ThemeContext);
+export function useTheme() {
+  const { resolvedTheme, setTheme, theme } = useNextTheme();
+  const isDark = (resolvedTheme ?? theme ?? "dark") !== "light";
+
+  return {
+    isDark,
+    toggle: () => setTheme(isDark ? "light" : "dark"),
+  };
+}
 
 /* ─── Cart Reducer ───────────────────────────────────────────── */
 export interface CartState {
@@ -62,6 +56,7 @@ export interface CartState {
 }
 
 export type CartAction =
+  | { type: "HYDRATE"; state: CartState }
   | { type: "ADD"; product: Product }
   | { type: "REMOVE"; id: string }
   | { type: "UPDATE"; id: string; qty: number }
@@ -71,6 +66,8 @@ export type CartAction =
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
+    case "HYDRATE":
+      return action.state;
     case "ADD": {
       const idx = state.items.findIndex((i) => i.id === action.product.id);
       if (idx >= 0) {
@@ -121,16 +118,28 @@ interface CartCtx {
 
 const CartContext = createContext<CartCtx>({} as CartCtx);
 
+const emptyCartState: CartState = { items: [], favorites: [], recentlyViewed: [] };
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, undefined, () => {
-    try {
-      const raw = localStorage.getItem("nexus-cart");
-      if (raw) return JSON.parse(raw) as CartState;
-    } catch {}
-    return { items: [], favorites: [], recentlyViewed: [] } as CartState;
-  });
+  const [state, dispatch] = useReducer(cartReducer, emptyCartState);
+  const cartLoaded = useRef(false);
 
   useEffect(() => {
+    try {
+      const raw = localStorage.getItem("nexus-cart");
+      if (raw) {
+        dispatch({ type: "HYDRATE", state: JSON.parse(raw) as CartState });
+        queueMicrotask(() => {
+          cartLoaded.current = true;
+        });
+        return;
+      }
+    } catch {}
+    cartLoaded.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!cartLoaded.current) return;
     try {
       localStorage.setItem("nexus-cart", JSON.stringify(state));
     } catch {}
@@ -152,7 +161,7 @@ export const useCart = () => useContext(CartContext);
 export const PRODUCTS: Product[] = [
   {
     id: "nexus-s1-black",
-    name: "NEXUS S1 — Midnight Black",
+    name: "NEXUS S1 — Midnight Edition",
     price: 449,
     originalPrice: 599,
     image:
@@ -161,7 +170,7 @@ export const PRODUCTS: Product[] = [
     badge: "Best Seller",
     rating: 4.9,
     reviews: 2841,
-    description: "The flagship NEXUS S1 in matte midnight black with titanium chassis.",
+    description: "A sleek black NEXUS S1 with a vivid edge-to-edge display and all-day health tracking.",
   },
   {
     id: "nexus-s1-titanium",
@@ -173,51 +182,51 @@ export const PRODUCTS: Product[] = [
     badge: "Premium",
     rating: 4.8,
     reviews: 1204,
-    description: "Grade 5 titanium case with a brushed silver finish — for those who demand more.",
+    description: "A refined silver model with a lightweight metal case and a clean, minimalist profile.",
   },
   {
     id: "sport-band",
-    name: "Performance Sport Band",
+    name: "Performance Sport Loop",
     price: 49,
     image:
       "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600&h=600&fit=crop&auto=format",
     category: "band",
     rating: 4.7,
     reviews: 891,
-    description: "Breathable fluoroelastomer band with quick-release mechanism.",
+    description: "A sweat-resistant sport loop built for training, daily movement, and quick adjustments.",
   },
   {
     id: "leather-band",
-    name: "Heritage Leather Band",
+    name: "Heritage Light Band",
     price: 79,
     image:
-      "https://images.unsplash.com/photo-1609592424826-8d9fa7bfe3e5?w=600&h=600&fit=crop&auto=format",
+      "https://cdn-images.vtv.vn/2019/10/29/photo-1-1572362412108206073343.png",
     category: "band",
     badge: "New",
     rating: 4.6,
     reviews: 445,
-    description: "Full-grain vegetable-tanned leather with antique brass hardware.",
+    description: "A soft light-tone strap that gives your NEXUS a clean, classic everyday look.",
   },
   {
     id: "magnetic-charger",
-    name: "NEXUS Magnetic Charger",
+    name: "Ion-X Glass Protector",
     price: 39,
     image:
-      "https://images.unsplash.com/photo-1461088945293-0c17689e48ac?w=600&h=600&fit=crop&auto=format",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR4EVdIiRXKy5u2iwONXmm5BVq4eVOTzuPqrqywgvtyL5YrD0rSOMWw_rw&s=10",
     category: "accessory",
     rating: 4.8,
     reviews: 2103,
-    description: "100W magnetic fast charger with 2m braided cable.",
+    description: "A slim tempered Ion-X glass layer designed to protect the display from daily scratches.",
   },
   {
     id: "screen-protector",
-    name: "Sapphire Screen Protector",
+    name: "Outdoor Sport Case",
     price: 29,
     image:
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&h=600&fit=crop&auto=format",
+      "https://fado.vn/blog/wp-content/uploads/2023/02/dong-ho-thong-minh-nhat-ban-jpg.webp",
     category: "accessory",
     rating: 4.5,
     reviews: 678,
-    description: "9H sapphire-coated tempered glass with oleophobic coating.",
+    description: "A rugged protective case for trail runs, gym sessions, and active outdoor days.",
   },
 ];
