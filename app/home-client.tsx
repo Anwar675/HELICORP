@@ -27,6 +27,7 @@ import { Toaster, toast } from "sonner";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
 import { Chatbot } from "./chatbot";
 
+// Validate newsletter interest form fields.
 function validate(name: string, email: string, phone: string) {
   const errs: Record<string, string> = {};
   if (!name.trim()) errs.name = "Name is required";
@@ -38,6 +39,7 @@ function validate(name: string, email: string, phone: string) {
   return errs;
 }
 
+// Track lightweight landing-page analytics events.
 export function useAnalytics() {
   const milestones = useRef(new Set<number>());
 
@@ -73,6 +75,7 @@ export function useAnalytics() {
   return { trackClick };
 }
 
+// Loading placeholder for product cards.
 function Skeleton({ className = "" }: { className?: string }) {
   return (
     <div
@@ -87,6 +90,7 @@ function Skeleton({ className = "" }: { className?: string }) {
   );
 }
 
+// Shared inline font styles.
 export const MONO: React.CSSProperties = {
   fontFamily: "'JetBrains Mono', monospace",
 };
@@ -97,6 +101,7 @@ export const SANS: React.CSSProperties = {
   fontFamily: "'DM Sans', sans-serif",
 };
 
+// Story section content.
 const storyBeats = [
   {
     tag: "The Problem",
@@ -124,6 +129,7 @@ const storyBeats = [
   },
 ];
 
+// Story image with scroll parallax.
 function StoryImage({
   img,
   imgAlt,
@@ -159,6 +165,8 @@ function StoryImage({
     </div>
   );
 }
+
+// Product rating stars.
 function Stars({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -176,6 +184,8 @@ function Stars({ rating }: { rating: number }) {
     </div>
   );
 }
+
+// Specs tab content.
 const specGroups = [
   {
     group: "Display",
@@ -218,6 +228,8 @@ const specGroups = [
     ],
   },
 ];
+
+// Feature card content.
 const featureCards = [
   {
     icon: Heart,
@@ -245,6 +257,7 @@ const featureCards = [
   },
 ];
 
+// Reusable scroll reveal animation wrapper.
 function Reveal({
   children,
   delay = 0,
@@ -266,6 +279,8 @@ function Reveal({
     </motion.div>
   );
 }
+
+// Product card used in the shop grid.
 function ProductCard({
   product: p,
   isFav,
@@ -375,6 +390,7 @@ function ProductCard({
   );
 }
 
+// Main landing page client component.
 export default function Home() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -392,9 +408,34 @@ export default function Home() {
   const [filter, setFilter] = useState<"all" | "watch" | "band" | "accessory">(
     "all",
   );
+  const [themeMounted, setThemeMounted] = useState(false);
+
+  const { isDark, toggle } = useTheme();
+  const { state, dispatch, total, count } = useCart();
+  const { trackClick } = useAnalytics();
+  const onCartOpen = useCallback(() => setCartOpen(true), []);
+  const onCartClose = useCallback(() => setCartOpen(false), []);
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end start"],
+  });
+  const imgY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  const filtered =
+    filter === "all" ? PRODUCTS : PRODUCTS.filter((p) => p.category === filter);
+  const tabs: { label: string; value: typeof filter }[] = [
+    { label: "All", value: "all" },
+    { label: "Watches", value: "watch" },
+    { label: "Bands", value: "band" },
+    { label: "Accessories", value: "accessory" },
+  ];
   const inputClass =
     "w-full bg-secondary border border-border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-primary";
+  const themeIsDark = themeMounted ? isDark : true;
 
+  // Update form state and clear field-level errors.
   const set =
     (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -406,6 +447,7 @@ export default function Home() {
       });
     };
 
+  // Check form values locally before showing success state.
   const handleSubmit = (ev: React.FormEvent) => {
     ev.preventDefault();
     const errs = validate(form.name, form.email, form.phone);
@@ -424,14 +466,7 @@ export default function Home() {
     });
   };
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 1600);
-    return () => clearTimeout(t);
-  }, []);
-
-  const filtered =
-    filter === "all" ? PRODUCTS : PRODUCTS.filter((p) => p.category === filter);
-
+  // Add a product to cart and mark it as viewed.
   const handleAddToCart = (product: Product) => {
     dispatch({ type: "ADD", product });
     dispatch({ type: "VIEW", product });
@@ -442,6 +477,7 @@ export default function Home() {
     });
   };
 
+  // Toggle product favorite state.
   const handleFavorite = (product: Product) => {
     const isFav = state.favorites.includes(product.id);
     dispatch({ type: "TOGGLE_FAV", id: product.id });
@@ -454,39 +490,35 @@ export default function Home() {
     });
   };
 
+  // Save product to recently viewed state.
   const handleView = (product: Product) => {
     dispatch({ type: "VIEW", product });
   };
 
-  const tabs: { label: string; value: typeof filter }[] = [
-    { label: "All", value: "all" },
-    { label: "Watches", value: "watch" },
-    { label: "Bands", value: "band" },
-    { label: "Accessories", value: "accessory" },
-  ];
+  // Simulate initial product-grid loading state.
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 1600);
+    return () => clearTimeout(t);
+  }, []);
 
-  const { isDark, toggle } = useTheme();
-  const { state, dispatch, total, count } = useCart();
-  const { trackClick } = useAnalytics();
-  const onCartOpen = useCallback(() => setCartOpen(true), []);
-  const onCartClose = useCallback(() => setCartOpen(false), []);
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  const imgY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "15%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  // Wait until mounted before rendering theme-dependent icon state.
+  useEffect(() => {
+    const t = setTimeout(() => setThemeMounted(true), 0);
+    return () => clearTimeout(t);
+  }, []);
 
+  // Update navigation background after scrolling.
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", fn, { passive: true });
     return () => window.removeEventListener("scroll", fn);
   }, []);
+
   return (
     <main>
       <Toaster richColors />
+
+      {/* Header navigation */}
       <header>
         <nav
           className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
@@ -527,16 +559,16 @@ export default function Home() {
                 }}
                 className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded"
                 aria-label={
-                  isDark ? "Switch to light mode" : "Switch to dark mode"
+                  themeIsDark ? "Switch to light mode" : "Switch to dark mode"
                 }
               >
                 <motion.div
-                  key={isDark ? "moon" : "sun"}
+                  key={themeIsDark ? "moon" : "sun"}
                   initial={{ rotate: -90, opacity: 0 }}
                   animate={{ rotate: 0, opacity: 1 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                  {themeIsDark ? <Sun size={18} /> : <Moon size={18} />}
                 </motion.div>
               </button>
 
@@ -617,6 +649,8 @@ export default function Home() {
           </AnimatePresence>
         </nav>
       </header>
+
+      {/* Cart drawer */}
       <AnimatePresence>
         {cartOpen && (
           <>
@@ -761,6 +795,8 @@ export default function Home() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Hero section */}
       <section
         ref={ref}
         id="hero"
@@ -911,6 +947,8 @@ export default function Home() {
           </motion.a>
         </div>
       </section>
+
+      {/* Story section */}
       <section id="story" className="bg-background py-32 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <Reveal>
@@ -979,6 +1017,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Features section */}
       <section id="features" className="bg-background py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <Reveal>
@@ -1085,6 +1125,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Products section */}
       <section
         id="products"
         className="bg-card py-32 px-6 border-t border-border"
@@ -1162,6 +1204,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Technical specs section */}
       <section
         id="specs"
         className="bg-background py-32 px-6 border-t border-border"
@@ -1244,6 +1288,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Order form section */}
       <section id="order" className="bg-card border-t border-border py-32 px-6">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <Reveal>
@@ -1452,6 +1498,8 @@ export default function Home() {
           </Reveal>
         </div>
       </section>
+
+      {/* Footer links */}
       <footer className="bg-background border-t border-border py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <span
@@ -1479,6 +1527,8 @@ export default function Home() {
           </span>
         </div>
       </footer>
+
+      {/* Floating chatbot */}
       <Chatbot />
     </main>
   );

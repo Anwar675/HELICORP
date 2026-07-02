@@ -1,3 +1,4 @@
+"use client"
 import {  useEffect, useRef, useState } from "react";
 import { MONO, SANS, useAnalytics } from "./home-client";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
